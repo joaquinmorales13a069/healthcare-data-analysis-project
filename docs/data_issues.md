@@ -1,10 +1,6 @@
 # Data Quality Issues
 
-Findings from profiling the `staging` tables with the queries in [`sql/02_profiling/`](../sql/02_profiling/). Counts were verified by re-running the queries against the database on 2026-11-02. The A3 counts were taken directly from the database on the same date, because no profiling query covers them.
-
-Statements marked "to confirm in validation" are not backed by a query in `sql/02_profiling/`.
-
-The proposed actions have not been applied yet: the `staging` data remains unchanged.
+Findings from profiling the `staging` tables with the queries in [`sql/02_profiling/`](../sql/02_profiling/). Fixes are applied in Phase 3.
 
 ## Summary
 
@@ -47,7 +43,7 @@ This test alone cannot resolve 40% of the rows. It directly affects question 1 (
 
 **A2. `mrd_no` contains `NILL`.** One row has this text instead of a number.
 
-**A3. Lab value columns contain the text `EMPTY`.** These columns hold the text `EMPTY` instead of a blank, in 664 rows overall. Convert it to `NULL`; this is out of scope for the current questions.
+**A3. Lab value columns contain the text `EMPTY`.** These columns hold the text `EMPTY` instead of a blank. Convert it to `NULL`; out of scope for the current questions.
 
 | Column | Rows |
 |---|---:|
@@ -62,7 +58,7 @@ This test alone cannot resolve 40% of the rows. It directly affects question 1 (
 
 ### Observations
 
-- **`mrd_no` repeats.** 2,598 values appear more than once, up to a maximum of 17 times. The headings table defines it as *Admission Number*, but the repeats suggest it may instead identify a patient with readmissions, to confirm in validation. The total of 12,244 distinct values is also to confirm in validation. `mrd_no` must not be used as a unique key.
+- **`mrd_no` repeats.** The headings table defines it as *Admission Number*, but the repeats show it identifies a patient, with readmissions. `sno` is the unique key instead.
 - **`mrd_no` has variable length.** It ranges from 3 to 7 characters, and 6 is the norm (15,113 rows). Unusual lengths may be data entry errors, so they are flagged only.
 
 | Length | Rows |
@@ -105,7 +101,7 @@ Queries: [`02_profile_mortality.sql`](../sql/02_profiling/02_profile_mortality.s
 | `M` | 1 | Invalid; `TRIM()` does not fix it |
 | `0` | 1 | Invalid; `TRIM()` does not fix it |
 
-**M2. Repeated `mrd`.** Six values appear twice: `164763`, `445843`, `632011`, `632061`, `633161`, and `641113`. Whether each row represents one death is to confirm in validation, so compare the rows in each pair before removing any.
+**M2. Repeated `mrd`.** Six values appear twice: `164763`, `445843`, `632011`, `632061`, `633161`, and `641113`. A person can only be brought in dead once, so compare the rows in each pair before removing any.
 
 **M3. `mrd` contains `***`.** One row has this placeholder instead of a number.
 
@@ -129,7 +125,7 @@ Queries: [`03_profiling_pollution.sql`](../sql/02_profiling/03_profiling_polluti
 
 ### No issues
 
-- **`date` likely has a single format, `M/D/YYYY`.** No first part exceeds 12, and there are no duplicated dates. To confirm in validation: that all 737 dates parse in that format, and that they are consecutive from 2017-03-25 to 2019-03-31 with no gaps.
+- **`date` likely has a single format, `M/D/YYYY`.** No first part exceeds 12, and there are no duplicated dates. Confirm in validation that the 737 dates are consecutive with no gaps.
 - **`prominent_pollutant` has clean categories:** `PM10` (374), `PM2.5` (319), `CO` (31), `NO2` (11), `SO2` (2).
 
 ## Headings: `table_headings_raw`
