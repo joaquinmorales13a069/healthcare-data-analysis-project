@@ -1,0 +1,53 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.pgpass
+compose.override.yaml
+
+# Data (never commit raw or processed datasets)
+data/*
+!data/.gitkeep
+*.csv
+*.tsv
+*.parquet
+*.xlsx
+*.xls
+*.json.gz
+
+# Database files and dumps
+*.db
+*.sqlite
+*.sqlite3
+*.duckdb
+*.duckdb.wal
+*.dump
+*.bak
+*.backup
+*.sql.gz
+*.tar.gz
+pgdata/
+postgres-data/
+mysql-data/
+
+# Query output and logs
+output/
+results/
+*.log
+*.tmp
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Editor and OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
