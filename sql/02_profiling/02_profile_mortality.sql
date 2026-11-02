@@ -36,7 +36,7 @@ ORDER BY
 -- OK: only M and F, no issues
 -- CHECK THE CATEGORIES DISPLAYED FOR rural_urban COLUMN
 SELECT
-	rural_urban,
+	'[' || rural_urban || ']' AS rural_urban,
 	COUNT(*)
 FROM
 	staging.hdhi_mortality_raw
@@ -44,7 +44,9 @@ GROUP BY
 	rural_urban
 ORDER BY
 	COUNT(*) DESC;
--- ISSUE: rural_urban = R seems to be repeated twice, same as U. Probably not grouped correctly or something affecting the group by.
+-- ISSUE: trailing spaces ('R ' x2, 'U ' x1). Fix: TRIM().
+-- ISSUE: invalid values '0' and 'M' (1 row each). Fix: set to NULL.
+
 -- CHECK IF EVERY mrd (admission number) is actually a number
 SELECT
 	mrd,

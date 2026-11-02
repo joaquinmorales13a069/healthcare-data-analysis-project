@@ -65,16 +65,12 @@ GROUP BY
 HAVING
 	COUNT(*) > 1;
 -- CHECK mrd_no UNIQUENESS
-SELECT
-	har.mrd_no,
-	count(*)
-FROM
-	staging.hdhi_admission_raw har
-GROUP BY
-	har.mrd_no
-HAVING
-	COUNT(*) > 1;
--- OBSERVATION: SEVERAL admission_numbers are listed more than once in the whole table. MAX 3 and MIN 1
+SELECT har.mrd_no, COUNT(*)
+FROM staging.hdhi_admission_raw har 
+GROUP BY har.mrd_no 
+HAVING count(*) > 1;
+-- OBSERVATION: Several mrd_no are listed more than once in the table, meaning these patients were admitted more than once in the hospital
+
 -- CHECK IF ALL admission numbers ARE THE SAME LENGTH
 SELECT
 	LENGTH(har.mrd_no) AS id_length,
@@ -86,6 +82,7 @@ GROUP BY
 ORDER BY
 	id_length;
 -- OBSERVATION: mrd_no ranges from 3 to 7 digits. Outliers likely typos, flag only.
+
 -- CHECK IF ALL ADMISSIONS AGE ARE IN A REASONABLE FRAME
 SELECT
 	MIN(har.age::INTEGER) AS min_age,
