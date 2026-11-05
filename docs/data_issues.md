@@ -1,6 +1,6 @@
 # Data Quality Issues
 
-Findings from profiling the `staging` tables with the queries in [`sql/02_profiling/`](../sql/02_profiling/). Fixes are applied in [`sql/03_clean/`](../sql/03_clean/) and checked in [`sql/04_validation/`](../sql/04_validation/).
+Findings from profiling the `staging` tables with the queries in [`sql/02_profiling/`](../sql/02_profiling/). Fixes are applied and validated in [`sql/03_cleaning/`](../sql/03_cleaning/).
 
 ## Summary
 

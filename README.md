@@ -29,9 +29,8 @@ The project follows a staging, clean and analysis pattern. Each stage has one jo
 |---|---|---|
 | 1. Staging | `staging` | Load each CSV exactly as it arrives, with every column as `TEXT`, so the load never fails |
 | 2. Profiling | `staging` | Find data quality issues (missing, invalid, inconsistent, duplicated or unrealistic values) without changing any data |
-| 3. Clean | `clean` | Rebuild each table with real data types and apply the fixes found in profiling |
-| 4. Validation | `clean` | Check that the clean tables match the expected counts and that each fix worked |
-| 5. Analysis | `clean` | Answer the five questions using only the clean tables |
+| 3. Cleaning | `clean` | Rebuild each table with real data types, apply the fixes found in profiling, and validate the result |
+| 4. Analysis | `clean` | Answer the five questions using only the clean tables |
 
 All issues found and the decision taken for each one are documented in [`docs/data_issues.md`](docs/data_issues.md).
 
@@ -40,15 +39,16 @@ All issues found and the decision taken for each one are documented in [`docs/da
 ```
 healthcare-data-analysis-project/
 ├── data/
-│   └── raw/                  # Original CSV files (download from Kaggle)
+│   └── raw/                  # Original CSV files (not committed, download from Kaggle)
 ├── docs/
 │   └── data_issues.md        # Data quality findings and decisions
 ├── sql/
 │   ├── 01_staging/           # Create the staging schema and raw tables
 │   ├── 02_profiling/         # Data quality checks on staging
-│   ├── 03_clean/             # Create and load the clean tables
-│   ├── 04_validation/        # Checks on the clean tables
-│   └── 05_analysis/          # One script per question
+│   ├── 03_cleaning/          # Create, load and validate the clean tables
+│   └── 04_analysis/          # One script per question
+├── .env.example              # Database settings template
+├── compose.yaml              # PostgreSQL container
 └── README.md
 ```
 
@@ -63,34 +63,47 @@ healthcare-data-analysis-project/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<your-username>/healthcare-data-analysis-project.git
+git clone https://github.com/joaquinmorales13a069/healthcare-data-analysis-project.git
 cd healthcare-data-analysis-project
 ```
 
 ### 2. Download the data
 
-Download the dataset from [Kaggle](https://www.kaggle.com/datasets/ashishsahani/hospital-admissions-data/data), unzip it, and place the four CSV files in `data/raw/`.
+Download the dataset from [Kaggle](https://www.kaggle.com/datasets/ashishsahani/hospital-admissions-data/data), unzip it, and place the four CSV files in `data/raw/` (create the folder if it does not exist). The data files are excluded from the repository by `.gitignore`.
 
-### 3. Start PostgreSQL in Docker
+### 3. Configure the database settings
+
+Copy the template and fill in your own values:
 
 ```bash
-docker run --name hdhi-postgres \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=<your-password> \
-  -e POSTGRES_DB=hdhi \
-  -p 5432:5432 \
-  -d postgres:16
+cp .env.example .env
 ```
 
-### 4. Connect DBeaver
+```
+POSTGRES_USER=
+POSTGRES_PASSWORD=
+POSTGRES_DB=
+```
 
-Create a new PostgreSQL connection with host `localhost`, port `5432`, database `hdhi`, and the user and password from the previous step.
+The `.env` file is excluded from the repository, so your password is never committed.
+
+### 4. Start PostgreSQL in Docker
+
+```bash
+docker compose up -d
+```
+
+This starts the `kaggle_healthcare_db` container on port `5432`. Data is kept in the `postgres_data` volume, so it survives container restarts.
+
+### 5. Connect DBeaver
+
+Create a new PostgreSQL connection with host `localhost`, port `5432`, and the database, user and password from your `.env` file.
 
 ## Running the project
 
 Run the scripts in folder and file number order.
 
-**Step 1: Staging.** Run the scripts in `sql/01_staging/` to create the `staging` schema and the four raw tables.
+**Step 1: Staging.** Run `sql/01_staging/01_staging.sql` to create the `staging` schema and the four raw tables.
 
 **Step 2: Import the CSV files.** In DBeaver, right click each staging table, choose **Import Data**, and select the matching CSV from `data/raw/`. Keep the default importer settings. On the **Tables mapping** screen, check that every column is mapped to an existing column, since some CSV headers (such as `D.O.A` or `GENDER ` with a trailing space) do not match automatically. Expected row counts:
 
@@ -101,15 +114,13 @@ Run the scripts in folder and file number order.
 | `staging.hdhi_pollution_raw` | 737 |
 | `staging.table_headings_raw` | 16,384 |
 
-The headings file contains thousands of empty rows; they are removed in the clean stage.
+The headings file contains thousands of empty rows; they are removed in the cleaning stage.
 
 **Step 3: Profiling (optional).** The scripts in `sql/02_profiling/` only read data. Run them to reproduce the findings in `docs/data_issues.md`.
 
-**Step 4: Clean.** Run the scripts in `sql/03_clean/` to create the `clean` schema and load the typed tables. Each script empties its table before inserting, so it can be rerun safely.
+**Step 4: Cleaning.** Run the scripts in `sql/03_cleaning/`, starting with `00_create_schema.sql`. Each script creates its clean table, empties it, loads it from staging, and ends with validation queries. Compare their results with the expected values noted in the comments. Each script can be rerun safely.
 
-**Step 5: Validation.** Run the scripts in `sql/04_validation/` and compare the results with the expected values noted in each script.
-
-**Step 6: Analysis.** Run the scripts in `sql/05_analysis/`, one per question.
+**Step 5: Analysis.** Run the scripts in `sql/04_analysis/`, one per question.
 
 ## Key data quality findings
 
@@ -123,4 +134,4 @@ To be added after the analysis stage.
 
 ## Tools
 
-PostgreSQL 16, Docker, DBeaver, Git and GitHub.
+PostgreSQL, Docker Compose, DBeaver, Git and GitHub.
